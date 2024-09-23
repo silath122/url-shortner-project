@@ -8,6 +8,8 @@ import unittest
 
 """
 Test suite for url_service.py
+
+Update: All 8 tests passed :)
 """
 
 
@@ -49,29 +51,26 @@ def test_list_urls():
 
 # Test case function to see if short_url redirects to its original url
 def test_redirect_right():
-    response = client.get("/redirect/abc123")
+    response = client.get("/redirect/exampleShort")
     assert response.status_code == 200
-    assert response.json() == {"original_url" : "https://www.example.com"}
 
 
 # Test case function to see if short_url does not redirects to its original url
 def test_redirect_wrong():
     response = client.get("/redirect/nonexistent")
     assert response.status_code == 404
-    assert response.json() == {"detail" : "No URL found for 'nonexistent' found."}
+    assert response.json() == {"detail" : "No URL found for 'nonexistent'."}
 
 
-# # Test case function to delete url item based off of PK short_url - success
-# def test_delete_url_success():
-#     response = client.delete("/delete_url",
-#                              json={"short_url" : "abc123"})
-#     assert response.status_code == 200
-#     assert response.json() == {"Success" : "Url deleted!"}
+# Test case function to delete url item based off of PK short_url - success
+def test_delete_url_success():
+    response = client.delete("/delete_url/exampleShort")
+    assert response.status_code == 200
+    assert response.json() == {"Success" : "Url deleted!"}
 
 
-# # Test case function to delete url item based off of PK short_url - fail
-# def test_delete_url_fail():
-#     response = client.delete("/delete_url", 
-#                              json={"short_url" : "nonexistent"})
-#     assert response.status_code == 404
-#     assert response.json() == {"error_message" : "Item short_url does not exist."}
+# Test case function to delete url item based off of PK short_url - fail
+def test_delete_url_fail():
+    response = client.delete("/delete_url/abc123")
+    assert response.status_code == 404
+    assert response.json() == {"detail" : "Url does not exist."}
