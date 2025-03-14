@@ -7,6 +7,16 @@ from typing import Optional
 
 app = FastAPI()
 
+# # Work flow
+# 1️⃣ Develop your API
+# Write your FastAPI endpoints (@app.get(), @app.post(), etc.).
+# 2️⃣ Use Postman for quick testing
+# Send a request → Check if it works → Fix any issues.
+# 3️⃣ Once API works, write unittest tests
+# Automate the tests using unittest so future changes won’t break your API.
+# 4️⃣ Use Postman for debugging when things break
+# If a unittest test fails, use Postman to send the request manually and figure out the issue.
+
 
 # Get the service resource
 dynamodb = boto3.resource('dynamodb')
@@ -38,22 +48,22 @@ def shorten_url(original_url: str, short_url: Optional[str] = None):
 
 
 
-# GET /list_urls: Lists all shortened URLs
-@app.get("/list_urls")
-def list_urls():
-    # loop through items in database and append to list
-    # return entire list
-    return {}
+# # GET /list_urls: Lists all shortened URLs
+# @app.get("/list_urls")
+# def list_urls():
+#     # loop through items in database and append to list
+#     # return entire list
+#     return {}
 
 
-# GET /redirect/{short_url}: Redirects to the original URL
-@app.get("/redirect/{short_url}")
-def redirect(short_url: str):
+# # GET /redirect/{short_url}: Redirects to the original URL
+# @app.get("/redirect/{short_url}")
+# def redirect(short_url: str):
 
-    # if short url does not exist then return error message:
-    # {"error_message":"No URL fond for 'nonexistent' found."}
+#     # if short url does not exist then return error message:
+#     # {"error_message":"No URL fond for 'nonexistent' found."}
 
-    # if short url does exist then redirect to original url
-    # Response 200: {"original_url":"https://www.example.com"}
+#     # if short url does exist then redirect to original url
+#     # Response 200: {"original_url":"https://www.example.com"}
 
-    return {}
+#     return {}
