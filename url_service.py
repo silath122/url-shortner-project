@@ -27,24 +27,52 @@ table = dynamodb.Table('url-shortner-db')
 # Instatiate item object to add to table
 class Url(BaseModel):
     original_url: str
-    short_url: Optional[str] = None
-    timestamp: Optional[str] = None
+    short_url: str | None = None
+    timestamp: str | None = None
 
 # POST /shorten_url: Shortens a URL
 @app.post("/shorten_url")
-def shorten_url(original_url: str, short_url: Optional[str] = None):
+def shorten_url(url: Url):
+
+    # Model_dump is BaseModels version of a dictionary
+    url_dict = url.model_dump()
+
     # need to check if original url is already in database
-    if short_url != None and short_url in table:
+    if url_dict.short_url is not None and url_dict.short_url in table:
         raise HTTPException(status_code=404, detail="Short URL '{short_url}' already exists.")
     
     # if it is not provided by user then make short url using uuid
-    elif short_url == None:
-        return {}
+    elif url_dict.short_url is None:
+        # create an escape_loop value and make it true
+        escape_loop = False
+
+        # Create a while loop that keeps going while False
+        while escape_loop == False:
+
+            # create temp_short_url using uuid and make it 8 characters only
+            temp_short_url = (str(uuid.uuid4()))[:8]
+
+            # check if temp_short_url already exists in the database
+            if temp_short_url not in table:
+                # if not then change escape_loop to True otherwise just continue with loop\
+                escape_loop = True
+        
+        # update url item and add temp_short_url to short_url
+        url.short_url = temp_short_url
+        
+
+    # add timestamp to url item
+    url.timestamp = str(datetime.now(tzinfo=datetime.timezone.utc))
 
     # if the short url is provided by user and not in the database then
     # add to database and return url item
-    else:
-        return{}
+    table.put_item(url)
+
+    # response 200 with short_url key and value
+    return table[url].short_url
+
+# Problem: Need to be able to access the specific url item and confirm it is
+# in the database. Use an Id or Token primary key for each url item
 
 
 
