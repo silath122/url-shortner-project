@@ -1,9 +1,13 @@
 from datetime import datetime
 from fastapi import FastAPI, HTTPException
 import boto3
+from botocore.exceptions import BotoCoreError, ClientError
 from pydantic import BaseModel
 import uuid
 from typing import Optional
+
+# In the terminal, start the FastAPI server using Uvicorn
+# uvicorn url_service:app --reload
 
 app = FastAPI()
 
@@ -19,7 +23,7 @@ app = FastAPI()
 
 
 # Get the service resource
-dynamodb = boto3.resource('dynamodb')
+dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 
 # Instantiate table resource object
 table = dynamodb.Table('url-shortner-db')
@@ -27,8 +31,8 @@ table = dynamodb.Table('url-shortner-db')
 # Instatiate item object to add to table
 class Url(BaseModel):
     original_url: str
-    short_url: str | None = None
-    timestamp: str | None = None
+    short_url: str | None = None # it's saying that there is an issue with short_url not existing in the url_dict
+    timestamp: str | None = None # it can't process the code
 
 # POST /shorten_url: Shortens a URL
 @app.post("/shorten_url")
@@ -64,15 +68,27 @@ def shorten_url(url: Url):
     # add timestamp to url item
     url.timestamp = str(datetime.now(tzinfo=datetime.timezone.utc))
 
-    # if the short url is provided by user and not in the database then
-    # add to database and return url item
-    table.put_item(url)
+    try:
+        # if the short url is provided by user and not in the database then
+        # add to database and return url item
+        response = table.put_item(
+            Item={
+                'pk': url.short_url,
+                'sk': url.timestamp,
+                'original_url': url.original_url
+            }
+        )
 
-    # response 200 with short_url key and value
-    return table[url].short_url
+        # check if put_itm was successful
+        if response.get("ResponseMetadata", {}).get("HTTPStatusCode") == 200:
+            return {"short_url": url.short_url}
+        
+        # raise exception it the data was failed to be stored in URL
+        raise HTTPException(status_code=500, detail="Failed to store URL")
+    
+    except BotoCoreError as e:
+        raise HTTPException(status_code=500, detail="DynamoDB connection error")
 
-# Problem: Need to be able to access the specific url item and confirm it is
-# in the database. Use an Id or Token primary key for each url item
 
 
 
