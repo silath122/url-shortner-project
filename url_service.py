@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import FastAPI, HTTPException
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
@@ -31,8 +31,7 @@ table = dynamodb.Table('url-shortner-db')
 # Instatiate item object to add to table
 class Url(BaseModel):
     original_url: str
-    short_url: str | None = None # it's saying that there is an issue with short_url not existing in the url_dict
-    timestamp: str | None = None # it can't process the code
+    short_url: str = None
 
 # POST /shorten_url: Shortens a URL
 @app.post("/shorten_url")
@@ -41,47 +40,39 @@ def shorten_url(url: Url):
     # Model_dump is BaseModels version of a dictionary
     url_dict = url.model_dump()
 
-    # need to check if original url is already in database
-    if url_dict.short_url is not None and url_dict.short_url in table:
-        raise HTTPException(status_code=404, detail="Short URL '{short_url}' already exists.")
+    # check if the user provided short_url  
+    if url_dict['short_url']:
+        # check if the short_url is already in table 
+        existing_item = table.get_item(Key={"short_url": url_dict["short_url"]}) # the error starts here
+        if "Item" in existing_item:
+            raise HTTPException(status_code=404, detail="Short URL '{short_url}' already exists.")
+    else:
+        # create unique short_url
+        while True:
+            temp_short_url = str(uuid.uuid4())[:8]
+            existing_item = table.get_item(Key={"pk": temp_short_url})
+            if "Item" not in existing_item:
+                url_dict["short_url"] = temp_short_url
+                break
+
     
-    # if it is not provided by user then make short url using uuid
-    elif url_dict.short_url is None:
-        # create an escape_loop value and make it true
-        escape_loop = False
-
-        # Create a while loop that keeps going while False
-        while escape_loop == False:
-
-            # create temp_short_url using uuid and make it 8 characters only
-            temp_short_url = (str(uuid.uuid4()))[:8]
-
-            # check if temp_short_url already exists in the database
-            if temp_short_url not in table:
-                # if not then change escape_loop to True otherwise just continue with loop\
-                escape_loop = True
-        
-        # update url item and add temp_short_url to short_url
-        url.short_url = temp_short_url
-        
 
     # add timestamp to url item
-    url.timestamp = str(datetime.now(tzinfo=datetime.timezone.utc))
+    url_dict["timestamp"] = datetime.now(timezone.utc).isoformat()
 
     try:
-        # if the short url is provided by user and not in the database then
-        # add to database and return url item
+        # store in dynamodb 
         response = table.put_item(
             Item={
-                'pk': url.short_url,
-                'sk': url.timestamp,
-                'original_url': url.original_url
+                'pk': url_dict["short_url"],
+                'sk': url_dict["timestamp"],
+                'original_url': url_dict["original_url"]
             }
         )
 
         # check if put_itm was successful
         if response.get("ResponseMetadata", {}).get("HTTPStatusCode") == 200:
-            return {"short_url": url.short_url}
+            return {"short_url": url_dict["short_url"]}
         
         # raise exception it the data was failed to be stored in URL
         raise HTTPException(status_code=500, detail="Failed to store URL")
