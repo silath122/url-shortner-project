@@ -1,9 +1,11 @@
 from datetime import datetime, timezone
 from fastapi import FastAPI, HTTPException
 import boto3
+from boto3.dynamodb.conditions import Key
 from botocore.exceptions import BotoCoreError, ClientError
 from pydantic import BaseModel
-import uuid
+import random
+import string
 from typing import Optional
 
 # In the terminal, start the FastAPI server using Uvicorn
@@ -11,7 +13,7 @@ from typing import Optional
 
 app = FastAPI()
 
-# # Work flow
+# # Work flow Testing
 # 1️⃣ Develop your API
 # Write your FastAPI endpoints (@app.get(), @app.post(), etc.).
 # 2️⃣ Use Postman for quick testing
@@ -20,7 +22,6 @@ app = FastAPI()
 # Automate the tests using unittest so future changes won’t break your API.
 # 4️⃣ Use Postman for debugging when things break
 # If a unittest test fails, use Postman to send the request manually and figure out the issue.
-
 
 # Get the service resource
 dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
@@ -41,21 +42,30 @@ def shorten_url(url: Url):
     url_dict = url.model_dump()
 
     # check if the user provided short_url  
-    if url_dict['short_url']:
+    if url_dict["short_url"]:
         # check if the short_url is already in table 
-        existing_item = table.get_item(Key={"short_url": url_dict["short_url"]}) # the error starts here
-        if "Item" in existing_item:
-            raise HTTPException(status_code=404, detail="Short URL '{short_url}' already exists.")
+        response = table.query(
+            KeyConditionExpression=Key('short_url').eq(url_dict['short_url'])
+        )
+
+        if response['Items']:
+            raise HTTPException(status_code=404, detail=f"Short URL '{url_dict['short_url']}' already exists.")
+
     else:
         # create unique short_url
         while True:
-            temp_short_url = str(uuid.uuid4())[:8]
-            existing_item = table.get_item(Key={"pk": temp_short_url})
-            if "Item" not in existing_item:
+            characters = string.ascii_letters + string.digits # a-z, A-Z, 0-9
+            temp_short_url = "".join(random.choices(characters, k=8))
+            
+            response = table.query(
+                KeyConditionExpression=Key('short_url').eq(temp_short_url)
+            )
+
+            if not response['Items']:
                 url_dict["short_url"] = temp_short_url
                 break
 
-    
+    # return {'short_url': url_dict["short_url"]}
 
     # add timestamp to url item
     url_dict["timestamp"] = datetime.now(timezone.utc).isoformat()
@@ -64,9 +74,9 @@ def shorten_url(url: Url):
         # store in dynamodb 
         response = table.put_item(
             Item={
-                'pk': url_dict["short_url"],
-                'sk': url_dict["timestamp"],
-                'original_url': url_dict["original_url"]
+                "short_url": url_dict["short_url"], # partition key
+                "timestamp": url_dict["timestamp"], # sort key
+                "original_url": url_dict["original_url"]
             }
         )
 
@@ -78,27 +88,37 @@ def shorten_url(url: Url):
         raise HTTPException(status_code=500, detail="Failed to store URL")
     
     except BotoCoreError as e:
-        raise HTTPException(status_code=500, detail="DynamoDB connection error")
+        raise HTTPException(status_code=500, detail=f"DynamoDB error: {str(e)}")
 
 
 
 
-# # GET /list_urls: Lists all shortened URLs
-# @app.get("/list_urls")
-# def list_urls():
-#     # loop through items in database and append to list
-#     # return entire list
-#     return {}
+# GET /list_urls: Lists all shortened URLs
+@app.get("/list_urls")
+def list_urls():
+    final_lst = []
+    response = table.scan()
+        
+    for item in response['Items']:
+        final_lst.append({"short_url":item["short_url"],
+                        "original_url":item["original_url"],
+                        "timestamp":item["timestamp"]})
+    # loop through items in database and append to list
+    # return entire list
+    return final_lst
 
 
-# # GET /redirect/{short_url}: Redirects to the original URL
-# @app.get("/redirect/{short_url}")
-# def redirect(short_url: str):
+# GET /redirect/{short_url}: Redirects to the original URL
+@app.get("/redirect/{short_url}")
+def redirect(short_url: str):
 
-#     # if short url does not exist then return error message:
-#     # {"error_message":"No URL fond for 'nonexistent' found."}
+    # query for singular short url in table
+    response = table.query(KeyConditionExpression=Key('short_url').eq(short_url))
 
-#     # if short url does exist then redirect to original url
-#     # Response 200: {"original_url":"https://www.example.com"}
-
-#     return {}
+    # if response contains no items that are equal short_url provided by user
+    if response['Items'] == []:
+        raise HTTPException(status_code=404, detail=f"No URL found for '{short_url}' found.") 
+    
+    # only one item to loop through the list of items
+    for item in response['Items']:
+        return {"original_url" : item["original_url"]}
