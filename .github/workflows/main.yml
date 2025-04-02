@@ -26,15 +26,15 @@ jobs:
         
         - name: Push Image to Docker Hub
           run: |
-            echo "${{ secrets.DOCKER_PASSWORD  }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+            echo "${{secrets.DOCKER_PASSWORD}}" | docker login -u "${{secrets.DOCKER_USERNAME}}" --password-stdin
             docker push silath122/url-shortner-proj
         
         - name: SSH into EC2 and Deploy
           uses: appleboy/ssh-action@master
           with:
-            host: ${{ secrets.EC2_HOST }}
+            host: ${{secrets.EC2_HOST}}
             username: ec2-user
-            key: ${{ secrets.EC2_SSH_KEY }}
+            key: ${{secrets.EC2_SSH_KEY}}
             script: |
                 docker pull silath122/url-shortner-proj
                 docker stop my-app || true
