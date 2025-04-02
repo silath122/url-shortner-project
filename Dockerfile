@@ -1,5 +1,6 @@
+# For me only to run: docker run -p 8888:8000 silath122/url-shortner-proj
 
-FROM python:3.12.9 AS base
+FROM python:3.12.9
 
 # set a directory for the app
 WORKDIR /app
@@ -17,12 +18,6 @@ COPY . .
 EXPOSE 8000
 
 # Command to run application
-CMD ["uvicorn", "url_service:app", "--host", "--port", "8000"]
+CMD ["uvicorn", "url_service:app", "--host", "0.0.0.0", "--port", "8000"]
 
 
-# Define test stage
-FROM base AS test
-
-RUN pip install --no-cache-dir pytest
-
-CMD ["pytest", "--disable-warnings"]
