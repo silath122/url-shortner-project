@@ -1,4 +1,4 @@
-name: Build and Deploy to EC2 project
+name: Build and Deploy to EC2
 
 on:
   push:
