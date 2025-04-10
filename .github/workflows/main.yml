@@ -28,7 +28,7 @@ jobs:
 
     - name: Log in to AWS EC2
       run: |
-        ssh -o StrictHostKeyChecking=no -i ${{ secrets.AWS_SSH_PRIVATE_KEY }} ec2-user@${{ secrets.AWS_EC2_IP }} << 'EOF'
+        ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_KEY }} ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
           docker pull my-docker-image
           docker stop my-container || true
           docker rm my-container || true
