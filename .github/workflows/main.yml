@@ -25,6 +25,10 @@ jobs:
     - name: Build the Docker image
       run: |
         docker build -t my-docker-image .
+    - name: Save EC2 SSH Key
+      run: |
+        echo "${{ secrets.EC2_SSH_KEY }}" > ec2-key.pem
+        chmod 600 ec2-key.pem
     - name: Log in to AWS EC2
       run: |
         ssh -o StrictHostKeyChecking=no -i ec2-key.pem ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
