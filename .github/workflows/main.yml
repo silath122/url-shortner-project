@@ -27,7 +27,7 @@ jobs:
         docker build -t my-docker-image .
     - name: Log in to AWS EC2
       run: |
-        ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_KEY }} ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
+        ssh -o StrictHostKeyChecking=no -i ec2-key.pem ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
           docker pull my-docker-image
           docker stop my-container || true
           docker rm my-container || true
