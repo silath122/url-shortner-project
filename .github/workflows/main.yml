@@ -27,11 +27,11 @@ jobs:
         docker build -t my-docker-image .
     - name: Save EC2 SSH Key
       run: |
-        echo "${{ secrets.EC2_SSH_KEY }}" > url-shortner122_23903jsdfhj.pem
-        chmod 600 ec2-key.pem
+        echo "${{ secrets.EC2_SSH_KEY }}" > ec2-deploy-key.pem
+        chmod 600 ec2-deploy-key.pem
     - name: Log in to AWS EC2
       run: |
-        ssh -o StrictHostKeyChecking=no -i url-shortner122_23903jsdfhj.pem ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
+        ssh -i ec2-deploy-key.pem ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
           docker pull my-docker-image
           docker stop my-container || true
           docker rm my-container || true
