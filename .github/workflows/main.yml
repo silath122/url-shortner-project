@@ -24,15 +24,22 @@ jobs:
         
     - name: Build the Docker image
       run: |
-        docker build -t my-docker-image .
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/url-shortner-proj:latest .
+    
+    - name: Push the Docker image to Docker Hub
+      run: |
+        docker push ${{ secrets.DOCKER_USERNAME }}/url-shortner-proj:latest
+
     - name: Save EC2 SSH Key
       run: |
         echo "${{ secrets.EC2_SSH_KEY }}" > ec2-deploy-key.pem
         chmod 600 ec2-deploy-key.pem
+
     - name: Log in to AWS EC2
       run: |
-        ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ec2-deploy-key.pem ec2-user@${{ secrets.EC2_HOST }}
-          docker pull my-docker-image
+        ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ec2-deploy-key.pem ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
+          docker pull ${ secrets.DOCKER_USERNAME }}/url-shortner-proj:latest || true
           docker stop my-container || true
           docker rm my-container || true
-          docker run -d -p 80:8000 --name my-container my-docker-image
+          docker run -d -p 80:8000 --name my-container ${{ secrets.DOCKER_USERNAME }}/url-shortner-proj:latest
+        EOF
