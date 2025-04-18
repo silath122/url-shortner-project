@@ -31,7 +31,7 @@ jobs:
         chmod 600 ec2-deploy-key.pem
     - name: Log in to AWS EC2
       run: |
-        ssh -i ec2-deploy-key.pem ec2-user@${{ secrets.EC2_HOST }}
+        ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ec2-deploy-key.pem ec2-user@${{ secrets.EC2_HOST }}
           docker pull my-docker-image
           docker stop my-container || true
           docker rm my-container || true
