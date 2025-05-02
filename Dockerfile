@@ -18,6 +18,6 @@ COPY . .
 EXPOSE 8000
 
 # Command to run application
-CMD ["uvicorn", "url_service:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "url_service:app", "--host", "0.0.0.0", "--port", "443", "--ssl-keyfile", "/etc/letsencrypt/live/messiah-urlshortnerproject.com-0001/privkey.pem", "--ssl-certfile", "/etc/letsencrypt/live/messiah-urlshortnerproject.com-0001/fullchain.pem"]
 
 
