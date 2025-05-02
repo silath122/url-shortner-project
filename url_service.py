@@ -26,7 +26,7 @@ app = FastAPI()
 # Get the service resource
 dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 
-# Instantiate table resource object
+# Instantiate table resource object for url shortners
 table = dynamodb.Table('url-shortner-db')
 
 # Instatiate item object to add to table
