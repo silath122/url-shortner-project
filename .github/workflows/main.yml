@@ -39,5 +39,6 @@ jobs:
           docker pull ${{ secrets.DOCKER_USERNAME }}/url-shortner-proj
           docker stop my-container || true
           docker rm my-container || true
-          docker run -d -p 80:8000 --name my-container ${{ secrets.DOCKER_USERNAME }}/url-shortner-proj
+          docker run -d -p 80:80 -p 443:443 -v /etc/letsencrypt:/certs:ro --name my-container ${{ secrets.DOCKER_USERNAME }}/url-shortner-proj
+          uvicorn url_shortner_project:app --host 0.0.0.0 --port 443 --ssl-keyfile /certs/live/messiah-urlshortnerproject.com/privkey.pem --ssl-certfile /certs/live/messiah-urlshortnerproject.com/fullchain.pem
         EOF
