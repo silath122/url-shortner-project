@@ -39,5 +39,5 @@ jobs:
           docker pull ${{ secrets.DOCKER_USERNAME }}/url-shortner-proj
           docker stop my-container || true
           docker rm my-container || true
-          docker run -d -p 443:8000 --name my-container ${{ secrets.DOCKER_USERNAME }}/url-shortner-proj
+          docker run -d -p 80:8000 --name my-container ${{ secrets.DOCKER_USERNAME }}/url-shortner-proj
         EOF
