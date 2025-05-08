@@ -1,6 +1,7 @@
 # url-shortner-project
 
-Website deployed: https://messiah-urlshortnerproject.com/docs
+Website deployed: https://messiah-urlshortnerproject.com/docs # okay so since updating my code my website is saying "502 Bad Gateway
+nginx/1.26.3" will come back to this tomorrow
 
 Readme coming soon
 
