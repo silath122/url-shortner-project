@@ -4,4 +4,4 @@ pytest
 boto3
 bcrypt==3.2.0
 pyjwt
-"passlib[bcrypt]"
+passlib[bcrypt]
